@@ -1,0 +1,800 @@
+{
+  "id": "585d281f-e0f3-438c-93a8-585c696ec197",
+  "revision": 0,
+  "last_node_id": 21,
+  "last_link_id": 35,
+  "nodes": [
+    {
+      "id": 12,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4260.984263264074,
+        -1899.9217374547106
+      ],
+      "size": [
+        540,
+        230
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 20
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "1.2.5",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "close-up, portrait, elderly man, bearded, intense gaze, wrinkled face, dark hair, gray beard, dramatic lighting, sepia tone, emotional, contemplative, textured skin, deep eyes, shadowed background, artistic, high contrast, detailed, expressive, human face, character study, moody, soulful, weathered, aged, expressive eyes, natural light, studio portrait, fine art, realism, portrait photography, human emotion, facial features, character, realism, dramatic, intense, expressive, soulful, aged, weathered, expressive eyes, natural light, studio portrait, fine art, realism, portrait photography, human emotion, facial features, character, realism, dramatic, intense, expressive, soulful, aged, weathered, expressive eyes, natural light, studio portrait, fine art, realism, portrait photography, human emotion, facial features, character, realism, dramatic, intense, expressive, soulful, aged, weathered, expressive eyes, natural light, studio portrait, fine art, realism, portrait photography, human emotion, facial features, character, realism, dramatic, intense, expressive, soulful, aged, weathered, expressive eyes, natural light, studio portrait, fine art, realism, portrait photography, human emotion, facial features, character, realism, dramatic, intense, expressive,"
+      ]
+    },
+    {
+      "id": 10,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4257.9315464858555,
+        -1533.124952406009
+      ],
+      "size": [
+        537.719033004204,
+        466.00000000000006
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "1.2.5",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "That's a great question! \n\nThe Earth is not perfectly spherical, it's slightly flattened at the poles and bulging at the equator.  \n\n* **Equatorial Circumference:** This is the largest circumference, measuring about **24,901 miles (40,075 kilometers)**.\n\nLet me know if you'd like to know the circumference at the poles or have any other questions about Earth's shape! 🌎  \n",
+        "The Earth's largest circumference is at the **equator**, where it bulges due to its rotation. This equatorial circumference is approximately:\n\n- **24,901 miles (39,999 kilometers)**\n\nThis is the longest distance around the Earth, measured along the equator. It's slightly longer than the polar circumference (about 24,860 miles or 40,008 km), which runs from pole to pole.\n\nSo, the **largest circumference** of the Earth is **about 24,901 miles (40,075 km)**. 🌍",
+        "The Earth's largest circumference is at the **equator**, where it bulges due to its rotation. This equatorial circumference is approximately:\n\n- **24,901 miles (39,999 kilometers)**\n\nThis is the longest distance around the Earth, measured along the equator. It's slightly longer than the polar circumference (about 24,860 miles or 40,008 km), which runs from pole to pole.\n\nSo, the **largest circumference** of the Earth is **about 24,901 miles (40,075 km)**. 🌍",
+        "The Earth's largest circumference is at the **equator**, where it bulges due to its rotation. This equatorial circumference is approximately:\n\n- **24,901 miles (39,999 kilometers)**\n\nThis is the longest distance around the Earth, measured along the equator. It's slightly longer than the polar circumference (about 24,860 miles or 40,008 km), which runs from pole to pole.\n\nSo, the **largest circumference** of the Earth is **about 24,901 miles (40,075 km)**. 🌍",
+        "The Earth's largest circumference is at the **equator**, where it bulges due to its rotation. This equatorial circumference is approximately:\n\n- **24,901 miles (39,999 kilometers)**\n\nThis is the longest distance around the Earth, measured along the equator. It's slightly longer than the polar circumference (about 24,860 miles or 40,008 km), which runs from pole to pole.\n\nSo, the **largest circumference** of the Earth is **about 24,901 miles (40,075 km)**. 🌍"
+      ]
+    },
+    {
+      "id": 11,
+      "type": "WASLMStudioQuery",
+      "pos": [
+        3823.0374715628886,
+        -1888.5253525405533
+      ],
+      "size": [
+        400,
+        206
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "LMSTUDIO_MODEL",
+          "link": 33
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 19
+        },
+        {
+          "name": "options",
+          "shape": 7,
+          "type": "LMSTUDIO_OPTIONS",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "name": "responses",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            20
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioQuery"
+      },
+      "widgets_values": [
+        "one-by-one",
+        "Only use keyword like tags separated by commas, only output the description.",
+        "Describe the image."
+      ]
+    },
+    {
+      "id": 3,
+      "type": "LoadImage",
+      "pos": [
+        2887.8690322076604,
+        -1399.5803700612244
+      ],
+      "size": [
+        274,
+        314
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            10,
+            19
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.66",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "Screenshot 2025-10-09 104006.png",
+        "image"
+      ]
+    },
+    {
+      "id": 17,
+      "type": "WASLoadImageDirectory",
+      "pos": [
+        3833.2177997131453,
+        -496.1168465251362
+      ],
+      "size": [
+        273.33333587646484,
+        226
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "dataset",
+          "type": "LMSTUDIO_DATASET_IMAGES",
+          "links": [
+            24
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLoadImageDirectory"
+      },
+      "widgets_values": [
+        "/mnt/m/Images/AI/datasets/vector_art",
+        true,
+        ".png,.jpg,.jpeg,.webp,.bmp",
+        "/mnt/m/Images/AI/datasets/vector_art/captions",
+        true,
+        "1:1",
+        "1024",
+        "fit"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "WASLMStudioCaptionDataset",
+      "pos": [
+        4153.217799713143,
+        -506.1168465251362
+      ],
+      "size": [
+        397.7760330746032,
+        205.55991731349212
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "LMSTUDIO_MODEL",
+          "link": 34
+        },
+        {
+          "name": "dataset",
+          "type": "LMSTUDIO_DATASET_IMAGES",
+          "link": 24
+        },
+        {
+          "name": "options",
+          "shape": 7,
+          "type": "LMSTUDIO_OPTIONS",
+          "link": 26
+        }
+      ],
+      "outputs": [
+        {
+          "name": "captions",
+          "shape": 6,
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "written_caption_paths",
+          "shape": 6,
+          "type": "STRING",
+          "links": []
+        },
+        {
+          "name": "result",
+          "type": "STRING",
+          "links": [
+            35
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioCaptionDataset"
+      },
+      "widgets_values": [
+        "SDXL Family",
+        "Examine the images art style colosely and determine it's styles commonly used name and frame the prompt around it. These images are all Vector Art."
+      ]
+    },
+    {
+      "id": 21,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4603.217799713143,
+        -506.1168465251362
+      ],
+      "size": [
+        540,
+        260
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "1.2.5",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "Dataset Captioning Complete\n==================================================\nTotal Images: 81\nSuccessfully Captioned: 81\nFailed: 0\nSkipped: 0\n\nSettings:\n  Task: SDXL Family\n  Model: qwen/qwen3-vl-30b\n  Temperature: 0.2\n  Max Tokens: 768\n  Force Aspect: 1:1\n  Max Size: 1024\n  Resize Mode: fit\n  Copy Images: True\n  Output Path: /mnt/m/Images/AI/datasets/vector_art/captions"
+      ]
+    },
+    {
+      "id": 8,
+      "type": "WASLMStudioCaption",
+      "pos": [
+        3831.1041650801985,
+        -904.7112617031778
+      ],
+      "size": [
+        400,
+        230
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "LMSTUDIO_MODEL",
+          "link": 31
+        },
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 10
+        },
+        {
+          "name": "options",
+          "shape": 7,
+          "type": "LMSTUDIO_OPTIONS",
+          "link": 11
+        }
+      ],
+      "outputs": [
+        {
+          "name": "captions",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            12
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioCaption"
+      },
+      "widgets_values": [
+        "one-by-one",
+        "Wan Family",
+        "dragan photography style"
+      ]
+    },
+    {
+      "id": 7,
+      "type": "WASLMStudioOptions",
+      "pos": [
+        3217.8690322076604,
+        -1109.5803700612244
+      ],
+      "size": [
+        270,
+        274
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "options",
+          "type": "LMSTUDIO_OPTIONS",
+          "links": [
+            11,
+            15,
+            18,
+            26
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioOptions"
+      },
+      "widgets_values": [
+        0.2,
+        270,
+        664974406,
+        "fixed",
+        1,
+        0,
+        0,
+        0,
+        1,
+        ""
+      ]
+    },
+    {
+      "id": 4,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4271.104165080199,
+        -914.7112617031778
+      ],
+      "size": [
+        540,
+        260
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 12
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "1.2.5",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "A close-up portrait of an elderly man with deeply wrinkled skin and a thick, graying beard, his intense gaze fixed directly on the viewer, captured in the dramatic, high-contrast lighting style of Dragan photography, with deep shadows and warm, golden highlights accentuating every texture of his weathered face, shot on a medium format camera with a shallow depth of field, creating a cinematic, intimate, and emotionally powerful moment in a dimly lit studio setting, rendered in a cinematic realism style with rich, saturated tones and a slightly desaturated background."
+      ]
+    },
+    {
+      "id": 9,
+      "type": "WASLMStudioChat",
+      "pos": [
+        3826.1458226353375,
+        -1532.2902464626213
+      ],
+      "size": [
+        400,
+        278
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "model",
+          "type": "LMSTUDIO_MODEL",
+          "link": 32
+        },
+        {
+          "name": "images",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "options",
+          "shape": 7,
+          "type": "LMSTUDIO_OPTIONS",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "name": "responses",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "queries",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "conversation_name",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioChat"
+      },
+      "widgets_values": [
+        "New Conversation",
+        "MyConversation",
+        "one-by-one",
+        "You are a tutor",
+        "What is the circumference of the Earth at it's largest points? ",
+        false
+      ]
+    },
+    {
+      "id": 15,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4827.9315464858555,
+        -1533.124952406009
+      ],
+      "size": [
+        543.0916144637349,
+        426
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "1.2.5",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "What is the circumference of the Earth at it's largest points? ",
+        "What is the circumference of the Earth at it's largest points? ",
+        "What is the circumference of the Earth at it's largest points? ",
+        "What is the circumference of the Earth at it's largest points? ",
+        "What is the circumference of the Earth at it's largest points? "
+      ]
+    },
+    {
+      "id": 20,
+      "type": "WASLMStudioModel",
+      "pos": [
+        3217.8690322076604,
+        -1399.5803700612244
+      ],
+      "size": [
+        270,
+        226
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "LMSTUDIO_MODEL",
+          "links": [
+            31,
+            32,
+            33,
+            34
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "WASLMStudioModel"
+      },
+      "widgets_values": [
+        "qwen/qwen3-vl-30b",
+        "",
+        true,
+        0.2,
+        768,
+        0,
+        "fixed",
+        "1024"
+      ]
+    }
+  ],
+  "links": [
+    [
+      10,
+      3,
+      0,
+      8,
+      1,
+      "IMAGE"
+    ],
+    [
+      11,
+      7,
+      0,
+      8,
+      2,
+      "LMSTUDIO_OPTIONS"
+    ],
+    [
+      12,
+      8,
+      0,
+      4,
+      0,
+      "STRING"
+    ],
+    [
+      15,
+      7,
+      0,
+      9,
+      2,
+      "LMSTUDIO_OPTIONS"
+    ],
+    [
+      16,
+      9,
+      0,
+      10,
+      0,
+      "STRING"
+    ],
+    [
+      18,
+      7,
+      0,
+      11,
+      2,
+      "LMSTUDIO_OPTIONS"
+    ],
+    [
+      19,
+      3,
+      0,
+      11,
+      1,
+      "IMAGE"
+    ],
+    [
+      20,
+      11,
+      0,
+      12,
+      0,
+      "STRING"
+    ],
+    [
+      23,
+      9,
+      1,
+      15,
+      0,
+      "STRING"
+    ],
+    [
+      24,
+      17,
+      0,
+      16,
+      1,
+      "LMSTUDIO_DATASET_IMAGES"
+    ],
+    [
+      26,
+      7,
+      0,
+      16,
+      2,
+      "LMSTUDIO_OPTIONS"
+    ],
+    [
+      31,
+      20,
+      0,
+      8,
+      0,
+      "LMSTUDIO_MODEL"
+    ],
+    [
+      32,
+      20,
+      0,
+      9,
+      0,
+      "LMSTUDIO_MODEL"
+    ],
+    [
+      33,
+      20,
+      0,
+      11,
+      0,
+      "LMSTUDIO_MODEL"
+    ],
+    [
+      34,
+      20,
+      0,
+      16,
+      0,
+      "LMSTUDIO_MODEL"
+    ],
+    [
+      35,
+      16,
+      2,
+      21,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Dataset Caption",
+      "bounding": [
+        3823.2177997131453,
+        -579.716846525137,
+        1329.9999999999982,
+        343.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Easy Caption",
+      "bounding": [
+        3821.1041650801985,
+        -988.3112617031778,
+        1000,
+        343.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Chat Conversation (Basic)",
+      "bounding": [
+        3816.1458226353375,
+        -1606.724952406009,
+        1564.8773383142525,
+        549.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "Query LLM",
+      "bounding": [
+        3813.037471562888,
+        -1973.5217374547105,
+        997.9467917011762,
+        313.6
+      ],
+      "color": "#3f789e",
+      "font_size": 24,
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.9229599817706615,
+      "offset": [
+        -2582.949839478488,
+        1936.053862298755
+      ]
+    },
+    "frontendVersion": "1.28.7",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}
