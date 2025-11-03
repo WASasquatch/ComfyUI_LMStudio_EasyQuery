@@ -2,6 +2,8 @@
 
 A custom node pack that integrates LM Studio's Python SDK with ComfyUI for local LLM/VLM workflows. It provides nodes for model configuration, flexible per-request options, text+vision querying, image captioning, and chat with persistent or temporary conversations.
 
+<img width="2441" height="1166" alt="image" src="https://github.com/user-attachments/assets/783173e3-f48a-4662-98a8-28ad264ec9fd" />
+
 ## Requirements
 Install the Python dependencies used by these nodes with the requirements.txt or simply install required modules:
 
