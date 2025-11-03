@@ -205,3 +205,11 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific folders
+conversations/
+temp_convos/
+temp_images/
+
+# Windows Zone Identifier files
+*:Zone.Identifier

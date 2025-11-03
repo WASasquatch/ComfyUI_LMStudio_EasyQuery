@@ -1,0 +1,10 @@
+{
+  "temperature": 0.15,
+  "max_tokens": 768,
+  "seed": 0,
+  "unload_after_use": true,
+  "default_model": "qwen/qwen2.5-vl-3b",
+  "image_max_sizes": [256, 512, 1024, 2048],
+  "default_image_max_size": 1024,
+  "allowed_root_directories": ["/mnt/k", "/mnt/m"]
+}

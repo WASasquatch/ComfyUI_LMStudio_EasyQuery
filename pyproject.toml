@@ -1,0 +1,25 @@
+[project]
+name = "was-lmstudio-easyquery"
+version = "0.1.0"
+description = "LM Studio calls with image support and easy task directions."
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[project.urls]
+Repository = "https://github.com/WASasquatch/WAS_LMStudio_EasyQuery"
+"Bug Tracker" = "https://github.com/WASasquatch/WAS_LMStudio_EasyQuery/issues"
+
+classifiers = [
+  "Operating System :: OS Independent"
+]
+
+[tool.comfy]
+PublisherId = "was"
+DisplayName = "WAS LMStudio EasyQuery"
+# Icon = "https://raw.githubusercontent.com/WASasquatch/WAS_LMStudio_EasyQuery/main/icon.png"
+# Banner = "https://raw.githubusercontent.com/WASasquatch/WAS_LMStudio_EasyQuery/main/banner.png"
+requires-comfyui = ">=1.0.0"
