@@ -12,9 +12,9 @@ pip install lmstudio numpy Pillow
 ```
 
 ## Installation
-Open manager and search Manager for `WAS LM Studio Easy-Query`, or:
+Open manager and search Manager for `WAS LMStudio Easy-Query`, or:
 
-1. Place this folder in `ComfyUI/custom_nodes/comfyui_lmstudio_nodes`.
+1. Place this folder in `ComfyUI/custom_nodes/ComfyUI_LMStudio_EasyQuery`.
 2. Start or restart ComfyUI. On startup, this pack clears:
    - `temp_convos/` (temporary conversations)
 

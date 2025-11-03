@@ -19,7 +19,7 @@ classifiers = [
 
 [tool.comfy]
 PublisherId = "was"
-DisplayName = "WAS LMStudio EasyQuery"
+DisplayName = "WAS LMStudio Easy-Query"
 # Icon = "https://raw.githubusercontent.com/WASasquatch/WAS_LMStudio_EasyQuery/main/icon.png"
 # Banner = "https://raw.githubusercontent.com/WASasquatch/WAS_LMStudio_EasyQuery/main/banner.png"
 requires-comfyui = ">=1.0.0"
