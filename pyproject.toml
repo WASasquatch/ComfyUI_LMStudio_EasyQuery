@@ -1,6 +1,6 @@
 [project]
 name = "was-lmstudio-easyquery"
-version = "0.2.0"
+version = "0.1.1"
 description = "LM Studio calls with image support and easy task directions."
 requires-python = ">=3.10"
 license = { file = "LICENSE" }

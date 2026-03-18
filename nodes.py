@@ -3,6 +3,8 @@ import json
 import io
 import uuid
 import shutil
+import base64
+import requests as _requests
 
 import numpy as np
 
@@ -85,6 +87,17 @@ def image_tensor_to_temp_png_path(image_tensor, max_edge: int = 1024) -> str:
     return p
 
 
+def resize_disk_image_to_temp(path: str, max_edge: int = 1024) -> str:
+    """Resize an on-disk image to max_edge (keeping aspect ratio) and return a temp PNG path."""
+    img = Image.open(path)
+    if max(img.size) > max_edge:
+        img.thumbnail((max_edge, max_edge), Image.Resampling.LANCZOS)
+    d = folder_paths.get_temp_directory()
+    out = os.path.join(d, f"{uuid.uuid4().hex}.png")
+    img.save(out, format="PNG")
+    return out
+
+
 def listify(x):
     """Convert input to list if it's not already."""
     if x is None:
@@ -105,6 +118,11 @@ def strip_thinking_tags(text: str) -> str:
     # Remove thinking tags and everything between them (including newlines)
     result = re.sub(r'<thinking>.*?</thinking>', '', text, flags=re.DOTALL)
     result = re.sub(r'<think>.*?</think>', '', result, flags=re.DOTALL)
+    # Handle missing opening tag: strip everything before a lone </think> or </thinking>
+    result = re.sub(r'^.*?</think>', '', result, flags=re.DOTALL)
+    result = re.sub(r'^.*?</thinking>', '', result, flags=re.DOTALL)
+    # Handle SDK "Thinking Process:" prefix when context was exhausted before </think>
+    result = re.sub(r'^Thinking Process:.*', '', result, flags=re.DOTALL)
     # Clean up any extra whitespace left behind
     result = re.sub(r'\n\s*\n\s*\n', '\n\n', result)  # Replace 3+ newlines with 2
     return result.strip()
@@ -115,8 +133,13 @@ def map_lms_params(params: Dict[str, Any]) -> Dict[str, Any]:
     for k, v in params.items():
         if v is None:
             continue
+        if k == "strip_thinking_tags":
+            continue
         if k == "max_tokens":
-            out["maxTokens"] = v
+            if v != -1:
+                out["maxTokens"] = v
+            else:
+                print("[LMStudio] max_tokens=-1 → unlimited generation (maxTokens omitted from SDK config)")
         elif k == "top_p":
             out["topP"] = v
         elif k == "top_k":
@@ -130,6 +153,157 @@ def map_lms_params(params: Dict[str, Any]) -> Dict[str, Any]:
         else:
             out[k] = v
     return out
+
+
+def encode_image_base64(image_path: str) -> str:
+    with open(image_path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+def query_lmstudio_rest(
+    model_id: str,
+    messages: List[Dict[str, Any]],
+    params: Optional[Dict[str, Any]] = None,
+    base_url: str = "http://127.0.0.1:1234",
+) -> Tuple[str, Optional[str], str]:
+    payload: Dict[str, Any] = {"model": model_id, "messages": messages}
+    if params:
+        for k, v in params.items():
+            if k in ("strip_thinking_tags",):
+                continue
+            if v is None:
+                continue
+            if k == "max_tokens":
+                if v != -1:
+                    payload["max_tokens"] = v
+            elif k == "seed":
+                if v != 0:
+                    payload["seed"] = v
+            elif k == "stop":
+                payload["stop"] = v
+            elif k == "repeat_penalty":
+                payload["repeat_penalty"] = v
+            else:
+                payload[k] = v
+    resp = _requests.post(f"{base_url}/v1/chat/completions", json=payload, timeout=600)
+    resp.raise_for_status()
+    data = resp.json()
+    choice = data["choices"][0]
+    msg = choice["message"]
+    content = msg.get("content", "") or ""
+    reasoning = msg.get("reasoning_content", None)
+    finish_reason = choice.get("finish_reason", "unknown")
+    return (content, reasoning, finish_reason)
+
+
+def build_openai_messages(
+    system_prompt: str,
+    user_prompt: str,
+    image_paths: Optional[List[str]] = None,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> List[Dict[str, Any]]:
+    messages: List[Dict[str, Any]] = []
+    if history:
+        messages.extend(history)
+    elif system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    if image_paths:
+        content_parts: List[Dict[str, Any]] = []
+        if user_prompt:
+            content_parts.append({"type": "text", "text": user_prompt})
+        for path in image_paths:
+            b64 = encode_image_base64(path)
+            content_parts.append({
+                "type": "image_url",
+                "image_url": {"url": f"data:image/png;base64,{b64}"},
+            })
+        messages.append({"role": "user", "content": content_parts})
+    else:
+        messages.append({"role": "user", "content": user_prompt or ""})
+    return messages
+
+
+def predict_text(
+    model_dict: Dict[str, Any],
+    system_prompt: str,
+    user_prompt: str,
+    image_paths: Optional[List[str]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    model_handle: Any = None,
+    history: Optional[List[Dict[str, str]]] = None,
+) -> str:
+    model_id = model_dict.get("model_id", "")
+    if model_dict.get("use_rest_api", False):
+        cfg = read_config()
+        base_url = cfg.get("base_url", "http://127.0.0.1:1234")
+        messages = build_openai_messages(system_prompt, user_prompt, image_paths, history)
+        content, reasoning, finish_reason = query_lmstudio_rest(model_id, messages, params, base_url)
+        print(f"[LMStudio REST] finish={finish_reason} content_len={len(content)}, reasoning_len={len(reasoning) if reasoning else 0}")
+        result = content.strip()
+        if not result:
+            # Model produced reasoning but no content — retry with /no_think to
+            # force a direct answer without the thinking phase.
+            nothink_prompt = ((user_prompt or "") + " /no_think").strip()
+            retry_messages = build_openai_messages(system_prompt, nothink_prompt, image_paths, history)
+            content2, _, finish2 = query_lmstudio_rest(model_id, retry_messages, params, base_url)
+            print(f"[LMStudio REST] retry /no_think: finish={finish2} content_len={len(content2)}")
+            result = content2.strip()
+        print(f"[LMStudio REST] result_len={len(result)}")
+        return result
+    else:
+        import lmstudio as lms
+        import tempfile
+        handle = model_handle or (lms.llm(model_id) if model_id else lms.llm())
+        strip = (params or {}).get("strip_thinking_tags", False)
+        prompt = user_prompt or ""
+        sdk_config = map_lms_params(params or {})
+
+        # When dealing with a thinking model (strip_thinking_tags=True) and
+        # max_tokens is unlimited (-1), cap generation to prevent the model
+        # from spending the entire context window on thinking.
+        if strip and "maxTokens" not in sdk_config:
+            sdk_config["maxTokens"] = 4096
+            print("[LMStudio SDK] Thinking model with unlimited max_tokens — capping generation at 4096 tokens")
+
+        # Retry loop: on context overflow, downscale images and retry
+        current_paths = list(image_paths) if image_paths else []
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            if history:
+                chat = lms.Chat.from_history({"messages": history})
+            else:
+                chat = lms.Chat(system_prompt) if system_prompt else lms.Chat()
+            if current_paths:
+                img_handles = [lms.prepare_image(p) for p in current_paths]
+                chat.add_user_message(prompt, images=img_handles)
+            else:
+                chat.add_user_message(prompt)
+            try:
+                pred = handle.respond(chat, config=sdk_config)
+                raw = str(pred)
+                has_think = "</think>" in raw or "</thinking>" in raw
+                print(f"[LMStudio SDK] raw_len={len(raw)} has_think_tags={has_think} strip_requested={strip}")
+                return raw
+            except Exception as e:
+                err_msg = str(e)
+                if "Context size" in err_msg and current_paths and attempt < max_retries:
+                    # Downscale images by 75% and retry
+                    new_paths = []
+                    for p in current_paths:
+                        img = Image.open(p)
+                        w, h = img.size
+                        nw, nh = int(w * 0.75), int(h * 0.75)
+                        if nw < 64 or nh < 64:
+                            print(f"[LMStudio SDK] Image too small to downscale further ({w}x{h})")
+                            raise
+                        img = img.resize((nw, nh), Image.LANCZOS)
+                        tmp = os.path.join(tempfile.gettempdir(), f"lms_ctx_{attempt}_{os.path.basename(p)}")
+                        img.save(tmp, "PNG")
+                        new_paths.append(tmp)
+                    current_paths = new_paths
+                    print(f"[LMStudio SDK] Context overflow — downscaled images to ~{int(100 * 0.75**(attempt+1))}% and retrying (attempt {attempt+2}/{max_retries+1})")
+                else:
+                    raise
 
 
 def check_chat_fits_in_context(model_handle: Any, chat: Any) -> Tuple[bool, int, int]:
@@ -386,9 +560,9 @@ class WASLMStudioModel:
                     "INT",
                     {
                         "default": max_tokens_default,
-                        "min": 1,
+                        "min": -1,
                         "max": 32768,
-                        "tooltip": "Maximum new tokens to generate for the assistant reply.",
+                        "tooltip": "Maximum new tokens to generate for the assistant reply. Use -1 for unlimited (recommended for thinking models).",
                     },
                 ),
                 "seed": (
@@ -405,6 +579,13 @@ class WASLMStudioModel:
                     {
                         "default": size_default,
                         "tooltip": "Maximum edge size for input images (keeps aspect ratio). Images larger than this are downscaled before encoding and sending to LM Studio.",
+                    },
+                ),
+                "use_rest_api": (
+                    "BOOLEAN",
+                    {
+                        "default": False,
+                        "tooltip": "Use the OpenAI-compatible REST API instead of the LM Studio SDK for predictions. Required for proper thinking model support (separates reasoning from content).",
                     },
                 ),
             },
@@ -426,6 +607,7 @@ class WASLMStudioModel:
         max_tokens: int,
         seed: int,
         image_max_size: str,
+        use_rest_api: bool = False,
     ):
         import lmstudio as lms
 
@@ -450,6 +632,7 @@ class WASLMStudioModel:
             "max_tokens": int(max_tokens),
             "seed": int(seed) if seed != 0 else None,
             "image_max_size": int(selected_max),
+            "use_rest_api": bool(use_rest_api),
         }
         return (result,)
 
@@ -543,9 +726,6 @@ class WASLMStudioQuery:
                     for idx, img in enumerate(imgs):
                         path = image_tensor_to_temp_png_path(img, max_edge=max_edge)
                         tmp_img_paths.append(path)
-                        img_handle = lms.prepare_image(path)
-                        chat = lms.Chat(system_prompt) if system_prompt else lms.Chat()
-                        chat.add_user_message(user_prompt or "", images=[img_handle])
                         params: Dict[str, Any] = {
                             "temperature": temperature,
                             "max_tokens": max_tokens,
@@ -558,18 +738,16 @@ class WASLMStudioQuery:
                                     params[k] = v
                             except Exception:
                                 pass
-                        pred = model_handle.respond(chat, config=map_lms_params(params))
-                        out.append(str(pred))
+                        text = predict_text(model, system_prompt, user_prompt or "", image_paths=[path], params=params, model_handle=model_handle)
+                        out.append(text)
                         pbar.update_absolute(idx + 1)
                     responses_out = out
                 else:
-                    img_handles = []
+                    all_paths = []
                     for i in imgs:
                         path = image_tensor_to_temp_png_path(i, max_edge=max_edge)
                         tmp_img_paths.append(path)
-                        img_handles.append(lms.prepare_image(path))
-                    chat = lms.Chat(system_prompt) if system_prompt else lms.Chat()
-                    chat.add_user_message(user_prompt or "", images=img_handles)
+                        all_paths.append(path)
                     params: Dict[str, Any] = {
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -582,11 +760,9 @@ class WASLMStudioQuery:
                                 params[k] = v
                         except Exception:
                             pass
-                    pred = model_handle.respond(chat, config=map_lms_params(params))
-                    responses_out = [str(pred)]
+                    text = predict_text(model, system_prompt, user_prompt or "", image_paths=all_paths, params=params, model_handle=model_handle)
+                    responses_out = [text]
             else:
-                chat = lms.Chat(system_prompt) if system_prompt else lms.Chat()
-                chat.add_user_message(user_prompt or "")
                 params: Dict[str, Any] = {
                     "temperature": temperature,
                     "max_tokens": max_tokens,
@@ -599,8 +775,8 @@ class WASLMStudioQuery:
                             params[k] = v
                     except Exception:
                         pass
-                pred = model_handle.respond(chat, config=map_lms_params(params))
-                responses_out = [str(pred)]
+                text = predict_text(model, system_prompt, user_prompt or "", params=params, model_handle=model_handle)
+                responses_out = [text]
 
         except Exception as e:
             print(f"Error in run_query: {e}")
@@ -642,7 +818,7 @@ class WASLMStudioOptions:
                 ),
                 "max_tokens": (
                     "INT",
-                    {"default": 512, "min": 1, "max": 32768, "tooltip": "Maximum number of new tokens to generate for the response."},
+                    {"default": 512, "min": -1, "max": 32768, "tooltip": "Maximum number of new tokens to generate for the response. Use -1 for unlimited (recommended for thinking models)."},
                 ),
                 "seed": (
                     "INT",
@@ -899,9 +1075,6 @@ class WASLMStudioChat:
                     for idx, img in enumerate(imgs):
                         path = image_tensor_to_temp_png_path(img, max_edge=max_edge)
                         tmp_img_paths.append(path)
-                        img_handle = lms.prepare_image(path)
-                        chat = lms.Chat.from_history({"messages": msgs}) if msgs else (lms.Chat(system_prompt) if system_prompt else lms.Chat())
-                        chat.add_user_message(user_prompt or "", images=[img_handle])
                         params: Dict[str, Any] = {
                             "temperature": temperature,
                             "max_tokens": max_tokens,
@@ -914,20 +1087,18 @@ class WASLMStudioChat:
                                     params[k] = v
                             except Exception:
                                 pass
-                        pred = model_handle.respond(chat, config=map_lms_params(params))
-                        out.append(str(pred))
+                        resp_text = predict_text(model, system_prompt, user_prompt or "", image_paths=[path], params=params, model_handle=model_handle, history=msgs if msgs else None)
+                        out.append(resp_text)
                         msgs.append({"role": "user", "content": user_prompt or ""})
-                        msgs.append({"role": "assistant", "content": str(pred)})
+                        msgs.append({"role": "assistant", "content": resp_text})
                         pbar.update_absolute(idx + 1)
                     responses_out = out
                 else:
-                    img_handles = []
+                    all_paths = []
                     for i in imgs:
                         path = image_tensor_to_temp_png_path(i, max_edge=max_edge)
                         tmp_img_paths.append(path)
-                        img_handles.append(lms.prepare_image(path))
-                    chat = lms.Chat.from_history({"messages": msgs}) if msgs else (lms.Chat(system_prompt) if system_prompt else lms.Chat())
-                    chat.add_user_message(user_prompt or "", images=img_handles)
+                        all_paths.append(path)
                     params: Dict[str, Any] = {
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -940,13 +1111,11 @@ class WASLMStudioChat:
                                 params[k] = v
                         except Exception:
                             pass
-                    pred = model_handle.respond(chat, config=map_lms_params(params))
-                    responses_out = [str(pred)]
+                    resp_text = predict_text(model, system_prompt, user_prompt or "", image_paths=all_paths, params=params, model_handle=model_handle, history=msgs if msgs else None)
+                    responses_out = [resp_text]
                     msgs.append({"role": "user", "content": user_prompt or ""})
-                    msgs.append({"role": "assistant", "content": str(pred)})
+                    msgs.append({"role": "assistant", "content": resp_text})
             else:
-                chat = lms.Chat.from_history({"messages": msgs}) if msgs else (lms.Chat(system_prompt) if system_prompt else lms.Chat())
-                chat.add_user_message(user_prompt or "")
                 params: Dict[str, Any] = {
                     "temperature": temperature,
                     "max_tokens": max_tokens,
@@ -959,10 +1128,10 @@ class WASLMStudioChat:
                             params[k] = v
                     except Exception:
                         pass
-                pred = model_handle.respond(chat, config=map_lms_params(params))
-                responses_out = [str(pred)]
+                resp_text = predict_text(model, system_prompt, user_prompt or "", params=params, model_handle=model_handle, history=msgs if msgs else None)
+                responses_out = [resp_text]
                 msgs.append({"role": "user", "content": user_prompt or ""})
-                msgs.append({"role": "assistant", "content": str(pred)})
+                msgs.append({"role": "assistant", "content": resp_text})
         except Exception as e:
             print(f"Error in chat: {e}")
             responses_out = [f"Error: {str(e)}"]
@@ -1101,9 +1270,6 @@ class WASLMStudioCaption:
                 for idx, img in enumerate(imgs):
                     path = image_tensor_to_temp_png_path(img, max_edge=max_edge)
                     tmp_img_paths.append(path)
-                    img_handle = lms.prepare_image(path)
-                    chat = lms.Chat(system_text) if system_text else lms.Chat()
-                    chat.add_user_message(user_prompt or "", images=[img_handle])
                     params: Dict[str, Any] = {
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -1116,19 +1282,17 @@ class WASLMStudioCaption:
                                 params[k] = v
                         except Exception:
                             pass
-                    pred = model_handle.respond(chat, config=map_lms_params(params))
-                    out.append(str(pred))
+                    text = predict_text(model, system_text, user_prompt or "", image_paths=[path], params=params, model_handle=model_handle)
+                    out.append(text)
                     pbar.update_absolute(idx + 1)
                 result = string_list(out)
             else:
-                img_handles = []
                 tmp_img_paths: List[str] = []
+                all_paths: List[str] = []
                 for i in imgs:
                     path = image_tensor_to_temp_png_path(i, max_edge=max_edge)
                     tmp_img_paths.append(path)
-                    img_handles.append(lms.prepare_image(path))
-                chat = lms.Chat(system_text) if system_text else lms.Chat()
-                chat.add_user_message(user_prompt or "", images=img_handles)
+                    all_paths.append(path)
                 params: Dict[str, Any] = {
                     "temperature": temperature,
                     "max_tokens": max_tokens,
@@ -1141,8 +1305,8 @@ class WASLMStudioCaption:
                             params[k] = v
                     except Exception:
                         pass
-                pred = model_handle.respond(chat, config=map_lms_params(params))
-                result = string_list([str(pred)])
+                text = predict_text(model, system_text, user_prompt or "", image_paths=all_paths, params=params, model_handle=model_handle)
+                result = string_list([text])
 
         except Exception as e:
             print(f"Error in generate_captions: {e}")
@@ -1349,6 +1513,7 @@ class WASLMStudioCaptionDataset:
         temperature = float(model.get("temperature", 0.2))
         max_tokens = int(model.get("max_tokens", 512))
         seed = model.get("seed", None)
+        max_edge = int(model.get("image_max_size", 1024))
         unload = model.get("unload", False)
         
         # Apply options overrides if provided
@@ -1398,9 +1563,7 @@ class WASLMStudioCaptionDataset:
                         skipped_count += 1
                         pbar.update_absolute(idx + 1)
                         continue
-                    img_handle = lms.prepare_image(p)
-                    chat = lms.Chat(system_text) if system_text else lms.Chat()
-                    chat.add_user_message(user_prompt or "", images=[img_handle])
+                    resized_path = resize_disk_image_to_temp(p, max_edge=max_edge)
                     params: Dict[str, Any] = {
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -1413,12 +1576,19 @@ class WASLMStudioCaptionDataset:
                                 params[k] = v
                         except Exception:
                             pass
-                    pred = model_handle.respond(chat, config=map_lms_params(params))
-                    text = str(pred).strip()
+                    text = predict_text(model, system_text, user_prompt or "", image_paths=[resized_path], params=params, model_handle=model_handle)
+                    print(f"[LMStudio DEBUG] after predict_text: len={len(text)} preview={text[:80]!r}")
                     
                     # Apply thinking tag filtering if requested
                     if options and options.get("strip_thinking_tags", False):
                         text = strip_thinking_tags(text)
+                        print(f"[LMStudio DEBUG] after strip_thinking: len={len(text)}")
+                    
+                    if not text.strip():
+                        print(f"[LMStudio WARNING] Empty result for {os.path.basename(p)} — model thinking may have filled the entire context. Increase context_length in LM Studio.")
+                        failed_count += 1
+                        pbar.update_absolute(idx + 1)
+                        continue
                     
                     if trigger_word_or_phrase.strip():
                         trigger = trigger_word_or_phrase.strip()
@@ -1575,6 +1745,7 @@ class WASLMStudioCaptionDatasetCustom:
         temperature = float(model.get("temperature", 0.2))
         max_tokens = int(model.get("max_tokens", 512))
         seed = model.get("seed", None)
+        max_edge = int(model.get("image_max_size", 1024))
         unload = model.get("unload", False)
         
         # Apply options overrides if provided
@@ -1624,9 +1795,7 @@ class WASLMStudioCaptionDatasetCustom:
                         skipped_count += 1
                         pbar.update_absolute(idx + 1)
                         continue
-                    img_handle = lms.prepare_image(p)
-                    chat = lms.Chat(system_text) if system_text else lms.Chat()
-                    chat.add_user_message(user_prompt or "", images=[img_handle])
+                    resized_path = resize_disk_image_to_temp(p, max_edge=max_edge)
                     params: Dict[str, Any] = {
                         "temperature": temperature,
                         "max_tokens": max_tokens,
@@ -1639,12 +1808,19 @@ class WASLMStudioCaptionDatasetCustom:
                                 params[k] = v
                         except Exception:
                             pass
-                    pred = model_handle.respond(chat, config=map_lms_params(params))
-                    text = str(pred).strip()
+                    text = predict_text(model, system_text, user_prompt or "", image_paths=[resized_path], params=params, model_handle=model_handle)
+                    print(f"[LMStudio DEBUG] after predict_text: len={len(text)} preview={text[:80]!r}")
                     
                     # Apply thinking tag filtering if requested
                     if options and options.get("strip_thinking_tags", False):
                         text = strip_thinking_tags(text)
+                        print(f"[LMStudio DEBUG] after strip_thinking: len={len(text)}")
+                    
+                    if not text.strip():
+                        print(f"[LMStudio WARNING] Empty result for {os.path.basename(p)} — model thinking may have filled the entire context. Increase context_length in LM Studio.")
+                        failed_count += 1
+                        pbar.update_absolute(idx + 1)
+                        continue
                     
                     if trigger_word_or_phrase.strip():
                         trigger = trigger_word_or_phrase.strip()
